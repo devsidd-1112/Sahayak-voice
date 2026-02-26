@@ -530,6 +530,11 @@ The app automatically extracts:
 
 ### Known Limitations
 
+**Android Build:**
+- ✅ **RESOLVED**: Kotlin version compatibility issue fixed by downgrading to Gradle 7.6.4
+- Build requires Gradle 7.6.4 and Android Gradle Plugin 7.4.2
+- First build takes 5-10 minutes to download dependencies
+
 **Entity Extraction:**
 - Pattern-based extraction may miss complex or unusual phrasings
 - Limited to predefined symptom keywords
