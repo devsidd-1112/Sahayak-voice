@@ -174,6 +174,162 @@ export const logout = async (): Promise<void> => {
 };
 
 /**
+ * Signup - Register a new user and send OTP
+ * 
+ * @param name - User's name
+ * @param phoneNumber - User's phone number
+ * @param password - User's password
+ * @returns Promise<void>
+ * @throws Error if signup fails
+ */
+export const signup = async (name: string, phoneNumber: string, password: string): Promise<void> => {
+  try {
+    const signupRequest = {
+      name,
+      phoneNumber,
+      password,
+    };
+
+    await axios.post(
+      `${API_BASE_URL}${API_ENDPOINTS.AUTH.SIGNUP}`,
+      signupRequest,
+      {
+        timeout: REQUEST_TIMEOUT,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError;
+      
+      if (axiosError.response) {
+        const status = axiosError.response.status;
+        const data: any = axiosError.response.data;
+        
+        if (status === 400 && data?.message) {
+          throw new Error(data.message);
+        } else if (status >= 500) {
+          throw new Error('सर्वर त्रुटि। कृपया बाद में पुनः प्रयास करें / Server error. Please try again later');
+        }
+      } else if (axiosError.request) {
+        throw new Error('नेटवर्क त्रुटि। कृपया अपना इंटरनेट कनेक्शन जांचें / Network error. Please check your internet connection');
+      }
+    }
+    
+    throw new Error('साइनअप विफल। कृपया पुनः प्रयास करें / Signup failed. Please try again');
+  }
+};
+
+/**
+ * Verify OTP and complete registration
+ * 
+ * @param phoneNumber - User's phone number
+ * @param otp - OTP code received
+ * @returns Promise<User> - User object with authentication token
+ * @throws Error if verification fails
+ */
+export const verifyOtp = async (phoneNumber: string, otp: string): Promise<User> => {
+  try {
+    const verifyRequest = {
+      phoneNumber,
+      otp,
+    };
+
+    const response = await axios.post<AuthResponse>(
+      `${API_BASE_URL}${API_ENDPOINTS.AUTH.VERIFY_OTP}`,
+      verifyRequest,
+      {
+        timeout: REQUEST_TIMEOUT,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const authResponse = response.data;
+
+    // Create user object
+    const user: User = {
+      id: authResponse.userId,
+      name: authResponse.name,
+      phoneNumber,
+      token: authResponse.token,
+    };
+
+    // Store authentication token
+    await storeAuthToken(authResponse.token);
+    
+    // Store user session
+    await storeUserSession(user);
+
+    return user;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError;
+      
+      if (axiosError.response) {
+        const status = axiosError.response.status;
+        const data: any = axiosError.response.data;
+        
+        if (status === 400 && data?.message) {
+          throw new Error(data.message);
+        } else if (status >= 500) {
+          throw new Error('सर्वर त्रुटि। कृपया बाद में पुनः प्रयास करें / Server error. Please try again later');
+        }
+      } else if (axiosError.request) {
+        throw new Error('नेटवर्क त्रुटि। कृपया अपना इंटरनेट कनेक्शन जांचें / Network error. Please check your internet connection');
+      }
+    }
+    
+    throw new Error('OTP सत्यापन विफल। कृपया पुनः प्रयास करें / OTP verification failed. Please try again');
+  }
+};
+
+/**
+ * Resend OTP for phone number verification
+ * 
+ * @param phoneNumber - User's phone number
+ * @returns Promise<void>
+ * @throws Error if resend fails
+ */
+export const resendOtp = async (phoneNumber: string): Promise<void> => {
+  try {
+    await axios.post(
+      `${API_BASE_URL}${API_ENDPOINTS.AUTH.RESEND_OTP}`,
+      null,
+      {
+        params: { phoneNumber },
+        timeout: REQUEST_TIMEOUT,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError;
+      
+      if (axiosError.response) {
+        const status = axiosError.response.status;
+        const data: any = axiosError.response.data;
+        
+        if (status === 400 && data?.message) {
+          throw new Error(data.message);
+        } else if (status >= 500) {
+          throw new Error('सर्वर त्रुटि। कृपया बाद में पुनः प्रयास करें / Server error. Please try again later');
+        }
+      } else if (axiosError.request) {
+        throw new Error('नेटवर्क त्रुटि। कृपया अपना इंटरनेट कनेक्शन जांचें / Network error. Please check your internet connection');
+      }
+    }
+    
+    throw new Error('OTP पुनः भेजना विफल। कृपया पुनः प्रयास करें / Failed to resend OTP. Please try again');
+  }
+};
+
+/**
  * Check if user is authenticated
  * 
  * @returns Promise<boolean> - True if user has valid token

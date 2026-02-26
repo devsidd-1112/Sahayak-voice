@@ -116,6 +116,15 @@ class VoiceInputService implements VoiceInputModule {
     this.currentLanguage = language;
 
     try {
+      // Destroy any existing session first
+      await Voice.destroy();
+      
+      // Re-initialize event listeners
+      Voice.onSpeechStart = this.onSpeechStart;
+      Voice.onSpeechEnd = this.onSpeechEnd;
+      Voice.onSpeechResults = this.onSpeechResults;
+      Voice.onSpeechError = this.onSpeechError;
+      
       // Start voice recognition with specified locale
       const locale = this.localeMap[language];
       await Voice.start(locale);
@@ -124,7 +133,7 @@ class VoiceInputService implements VoiceInputModule {
     } catch (error) {
       console.error('Error starting recording:', error);
       this.recording = false;
-      throw new Error('Failed to start recording');
+      throw new Error('Failed to start recording. Please check microphone permissions and try again.');
     }
   }
 
@@ -186,6 +195,19 @@ class VoiceInputService implements VoiceInputModule {
    */
   getSupportedLanguages(): string[] {
     return ['hi-IN', 'en-IN'];
+  }
+
+  /**
+   * Check if voice recognition is available on device
+   */
+  async isAvailable(): Promise<boolean> {
+    try {
+      const available = await Voice.isAvailable();
+      return available === 1;
+    } catch (error) {
+      console.error('Error checking voice availability:', error);
+      return false;
+    }
   }
 
   /**

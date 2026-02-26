@@ -53,7 +53,7 @@ const VoiceRecordingScreen: React.FC = () => {
 
   // Auto-start recording when screen loads
   useEffect(() => {
-    handleStartRecording();
+    checkVoiceAvailabilityAndStart();
     
     // Cleanup on unmount
     return () => {
@@ -62,6 +62,33 @@ const VoiceRecordingScreen: React.FC = () => {
       }
     };
   }, []);
+
+  /**
+   * Check if voice recognition is available and start recording
+   */
+  const checkVoiceAvailabilityAndStart = async () => {
+    try {
+      const available = await voiceInputService.isAvailable();
+      if (!available) {
+        Alert.alert(
+          'Voice Recognition Not Available / वॉइस पहचान उपलब्ध नहीं',
+          'Voice recognition is not available on this device.\nइस डिवाइस पर वॉइस पहचान उपलब्ध नहीं है।',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.goBack(),
+            },
+          ]
+        );
+        return;
+      }
+      
+      await handleStartRecording();
+    } catch (error) {
+      console.error('Error checking voice availability:', error);
+      await handleStartRecording(); // Try anyway
+    }
+  };
 
   // Handle hardware back button on Android
   useEffect(() => {

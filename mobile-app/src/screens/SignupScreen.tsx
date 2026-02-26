@@ -11,42 +11,36 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {LoginScreenNavigationProp} from '../navigation/types';
-import {login} from '../services/auth';
+import {SignupScreenNavigationProp} from '../navigation/types';
+import {signup} from '../services/auth';
 
-/**
- * Login Screen Component
- * 
- * Provides user authentication interface for ASHA workers.
- * Features:
- * - Phone number input field
- * - Password input field
- * - Login button
- * - Error message display
- * - Form validation
- * - Integration with authentication API
- * - Navigation to Home screen on successful login
- * 
- * Requirements: 1.1, 1.2, 8.1, 8.2
- */
-
-const LoginScreen: React.FC = () => {
-  const navigation = useNavigation<LoginScreenNavigationProp>();
+const SignupScreen: React.FC = () => {
+  const navigation = useNavigation<SignupScreenNavigationProp>();
+  const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Form validation
   const validateForm = (): boolean => {
     setError('');
+
+    if (!name.trim()) {
+      setError('कृपया नाम दर्ज करें / Please enter name');
+      return false;
+    }
+
+    if (name.trim().length < 2) {
+      setError('नाम कम से कम 2 अक्षर का होना चाहिए / Name must be at least 2 characters');
+      return false;
+    }
 
     if (!phoneNumber.trim()) {
       setError('कृपया फ़ोन नंबर दर्ज करें / Please enter phone number');
       return false;
     }
 
-    // Basic phone number validation (10 digits)
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(phoneNumber.trim())) {
       setError('कृपया वैध 10 अंकों का फ़ोन नंबर दर्ज करें / Please enter valid 10-digit phone number');
@@ -63,11 +57,15 @@ const LoginScreen: React.FC = () => {
       return false;
     }
 
+    if (password !== confirmPassword) {
+      setError('पासवर्ड मेल नहीं खाते / Passwords do not match');
+      return false;
+    }
+
     return true;
   };
 
-  // Handle login button press
-  const handleLogin = async () => {
+  const handleSignup = async () => {
     if (!validateForm()) {
       return;
     }
@@ -76,14 +74,15 @@ const LoginScreen: React.FC = () => {
     setError('');
 
     try {
-      // Call authentication API
-      await login(phoneNumber.trim(), password);
+      await signup(name.trim(), phoneNumber.trim(), password);
       
-      // On success, navigate to Home screen
-      navigation.replace('Home');
+      // Navigate to OTP verification screen
+      navigation.navigate('OTPVerification', {
+        phoneNumber: phoneNumber.trim(),
+        name: name.trim(),
+      });
     } catch (err: any) {
-      // Display error message
-      const errorMessage = err.message || 'लॉगिन विफल / Login failed';
+      const errorMessage = err.message || 'साइनअप विफल / Signup failed';
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -98,22 +97,28 @@ const LoginScreen: React.FC = () => {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled">
-        {/* App Title */}
         <View style={styles.header}>
-          <Text style={styles.title}>Sahayak Voice</Text>
-          <Text style={styles.subtitle}>सहायक वॉइस</Text>
-          <Text style={styles.description}>
-            ASHA Worker Login{'\n'}आशा कार्यकर्ता लॉगिन
-          </Text>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>खाता बनाएं</Text>
         </View>
 
-        {/* Login Form */}
         <View style={styles.form}>
-          {/* Phone Number Input */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>
-              📱 Phone Number / फ़ोन नंबर
-            </Text>
+            <Text style={styles.label}>👤 Name / नाम</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your name"
+              placeholderTextColor="#95a5a6"
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+              autoCorrect={false}
+              editable={!isLoading}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>📱 Phone Number / फ़ोन नंबर</Text>
             <TextInput
               style={styles.input}
               placeholder="10-digit phone number"
@@ -128,11 +133,8 @@ const LoginScreen: React.FC = () => {
             />
           </View>
 
-          {/* Password Input */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>
-              🔒 Password / पासवर्ड
-            </Text>
+            <Text style={styles.label}>🔒 Password / पासवर्ड</Text>
             <TextInput
               style={styles.input}
               placeholder="Enter password"
@@ -146,48 +148,49 @@ const LoginScreen: React.FC = () => {
             />
           </View>
 
-          {/* Error Message Display */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>🔒 Confirm Password / पासवर्ड की पुष्टि करें</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Re-enter password"
+              placeholderTextColor="#95a5a6"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!isLoading}
+            />
+          </View>
+
           {error ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>⚠️ {error}</Text>
             </View>
           ) : null}
 
-          {/* Login Button */}
           <TouchableOpacity
-            style={[
-              styles.loginButton,
-              isLoading && styles.loginButtonDisabled,
-            ]}
-            onPress={handleLogin}
+            style={[styles.signupButton, isLoading && styles.signupButtonDisabled]}
+            onPress={handleSignup}
             disabled={isLoading}
             activeOpacity={0.7}>
             {isLoading ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <Text style={styles.loginButtonText}>
-                Login / लॉगिन करें
+              <Text style={styles.signupButtonText}>
+                Sign Up / साइन अप करें
               </Text>
             )}
           </TouchableOpacity>
 
-          {/* Signup Link */}
           <TouchableOpacity
-            style={styles.signupLink}
-            onPress={() => navigation.navigate('Signup')}
+            style={styles.loginLink}
+            onPress={() => navigation.navigate('Login')}
             disabled={isLoading}>
-            <Text style={styles.signupLinkText}>
-              Don't have an account? Sign Up / खाता नहीं है? साइन अप करें
+            <Text style={styles.loginLinkText}>
+              Already have an account? Login / पहले से खाता है? लॉगिन करें
             </Text>
           </TouchableOpacity>
-        </View>
-
-        {/* Helper Text */}
-        <View style={styles.footer}>
-          <Text style={styles.helperText}>
-            For demo: Use any 10-digit phone number{'\n'}
-            डेमो के लिए: कोई भी 10 अंकों का फ़ोन नंबर उपयोग करें
-          </Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -206,7 +209,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 30,
   },
   title: {
     fontSize: 32,
@@ -218,13 +221,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '600',
     color: '#34495e',
-    marginBottom: 15,
-  },
-  description: {
-    fontSize: 16,
-    color: '#7f8c8d',
-    textAlign: 'center',
-    lineHeight: 24,
   },
   form: {
     backgroundColor: '#fff',
@@ -240,18 +236,18 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#2c3e50',
     marginBottom: 8,
   },
   input: {
-    height: 56,
+    height: 50,
     borderWidth: 2,
     borderColor: '#bdc3c7',
     borderRadius: 10,
     paddingHorizontal: 15,
-    fontSize: 18,
+    fontSize: 16,
     color: '#2c3e50',
     backgroundColor: '#fff',
   },
@@ -265,12 +261,12 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#c0392b',
-    fontSize: 15,
+    fontSize: 14,
     lineHeight: 20,
   },
-  loginButton: {
+  signupButton: {
     backgroundColor: '#27ae60',
-    height: 60,
+    height: 55,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
@@ -281,34 +277,24 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  loginButtonDisabled: {
+  signupButtonDisabled: {
     backgroundColor: '#95a5a6',
     shadowOpacity: 0.1,
   },
-  loginButtonText: {
+  signupButtonText: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
   },
-  signupLink: {
+  loginLink: {
     marginTop: 20,
     alignItems: 'center',
   },
-  signupLinkText: {
+  loginLinkText: {
     color: '#3498db',
     fontSize: 14,
     textAlign: 'center',
   },
-  footer: {
-    marginTop: 30,
-    alignItems: 'center',
-  },
-  helperText: {
-    fontSize: 14,
-    color: '#7f8c8d',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
 });
 
-export default LoginScreen;
+export default SignupScreen;
