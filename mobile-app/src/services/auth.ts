@@ -36,9 +36,15 @@ export const login = async (phoneNumber: string, password: string): Promise<User
       password,
     };
 
+    const url = `${API_BASE_URL}${API_ENDPOINTS.AUTH.LOGIN}`;
+    console.log('=== LOGIN REQUEST ===');
+    console.log('URL:', url);
+    console.log('Phone:', phoneNumber);
+    console.log('====================');
+
     // Make POST request to login endpoint
     const response = await axios.post<AuthResponse>(
-      `${API_BASE_URL}${API_ENDPOINTS.AUTH.LOGIN}`,
+      url,
       loginRequest,
       {
         timeout: REQUEST_TIMEOUT,
@@ -49,6 +55,7 @@ export const login = async (phoneNumber: string, password: string): Promise<User
     );
 
     const authResponse = response.data;
+    console.log('Login successful!');
 
     // Create user object
     const user: User = {
@@ -66,6 +73,10 @@ export const login = async (phoneNumber: string, password: string): Promise<User
 
     return user;
   } catch (error) {
+    console.log('=== LOGIN ERROR ===');
+    console.log('Error:', error);
+    console.log('==================');
+    
     // Handle different error types
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError;

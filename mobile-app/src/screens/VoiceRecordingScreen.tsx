@@ -72,10 +72,19 @@ const VoiceRecordingScreen: React.FC = () => {
       if (!available) {
         Alert.alert(
           'Voice Recognition Not Available / वॉइस पहचान उपलब्ध नहीं',
-          'Voice recognition is not available on this device.\nइस डिवाइस पर वॉइस पहचान उपलब्ध नहीं है।',
+          'Voice recognition is not available on this device. You can still test other features.\n\nइस डिवाइस पर वॉइस पहचान उपलब्ध नहीं है। आप अन्य सुविधाओं का परीक्षण कर सकते हैं।',
           [
             {
-              text: 'OK',
+              text: 'Use Text Input / टेक्स्ट इनपुट उपयोग करें',
+              onPress: () => {
+                // For testing: simulate voice input with text
+                setTranscribedText('Patient name is Priya, BP is 120/80, child has fever');
+                setIsRecording(false);
+              },
+            },
+            {
+              text: 'Go Back / वापस जाएं',
+              style: 'cancel',
               onPress: () => navigation.goBack(),
             },
           ]
@@ -86,7 +95,25 @@ const VoiceRecordingScreen: React.FC = () => {
       await handleStartRecording();
     } catch (error) {
       console.error('Error checking voice availability:', error);
-      await handleStartRecording(); // Try anyway
+      // Show option to use text input for testing
+      Alert.alert(
+        'Voice Recognition Error / वॉइस पहचान त्रुटि',
+        'Could not initialize voice recognition. Use text input for testing?\n\nवॉइस पहचान प्रारंभ नहीं हो सका। परीक्षण के लिए टेक्स्ट इनपुट उपयोग करें?',
+        [
+          {
+            text: 'Use Text Input / टेक्स्ट इनपुट',
+            onPress: () => {
+              setTranscribedText('Patient name is Priya, BP is 120/80, child has fever');
+              setIsRecording(false);
+            },
+          },
+          {
+            text: 'Cancel / रद्द करें',
+            style: 'cancel',
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      );
     }
   };
 

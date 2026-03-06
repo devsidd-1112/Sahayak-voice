@@ -43,10 +43,18 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        System.out.println("===========================================");
+        System.out.println("LOGIN REQUEST RECEIVED");
+        System.out.println("Phone: " + request.getPhoneNumber());
+        System.out.println("===========================================");
+        
         try {
             AuthResponse response = authenticationService.login(request);
+            System.out.println("Login successful for: " + request.getPhoneNumber());
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
+            System.out.println("Login failed for: " + request.getPhoneNumber());
+            System.out.println("Error: " + e.getMessage());
             // Handle invalid credentials
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Invalid credentials");
@@ -63,6 +71,12 @@ public class AuthController {
      */
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
+        System.out.println("===========================================");
+        System.out.println("SIGNUP REQUEST RECEIVED");
+        System.out.println("Name: " + request.getName());
+        System.out.println("Phone: " + request.getPhoneNumber());
+        System.out.println("===========================================");
+        
         try {
             authenticationService.initiateSignup(request);
             Map<String, String> response = new HashMap<>();
@@ -70,6 +84,7 @@ public class AuthController {
             response.put("phoneNumber", request.getPhoneNumber());
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
+            System.out.println("Signup failed: " + e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Signup failed");
             errorResponse.put("message", e.getMessage());
