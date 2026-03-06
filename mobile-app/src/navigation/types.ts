@@ -15,7 +15,9 @@ export type RootStackParamList = {
     name: string;
   };
   Home: undefined;
-  VoiceRecording: undefined;
+  VoiceRecording: {
+    language: 'hi' | 'en';
+  };
   VoiceConfirmation: {
     extractedData: {
       patientName: string | null;

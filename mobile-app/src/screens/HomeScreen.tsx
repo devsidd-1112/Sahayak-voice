@@ -33,6 +33,7 @@ const HomeScreen: React.FC = () => {
   const [userName, setUserName] = useState('ASHA Worker');
   const [isOnline, setIsOnline] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [selectedLanguage, setSelectedLanguage] = useState<'hi' | 'en'>('en'); // Default to English
 
   // Load user info and sync status on mount
   useEffect(() => {
@@ -105,7 +106,7 @@ const HomeScreen: React.FC = () => {
   };
 
   const handleRecordVisit = () => {
-    navigation.navigate('VoiceRecording');
+    navigation.navigate('VoiceRecording', {language: selectedLanguage});
   };
 
   const handleViewRecords = () => {
@@ -203,6 +204,45 @@ const HomeScreen: React.FC = () => {
 
       {/* Main Content */}
       <View style={styles.content}>
+        {/* Language Selection */}
+        <View style={styles.languageSelector}>
+          <Text style={styles.languageSelectorLabel}>
+            Select Language / भाषा चुनें
+          </Text>
+          <View style={styles.languageButtons}>
+            <TouchableOpacity
+              style={[
+                styles.languageButton,
+                selectedLanguage === 'en' && styles.languageButtonActive,
+              ]}
+              onPress={() => setSelectedLanguage('en')}
+              activeOpacity={0.7}>
+              <Text
+                style={[
+                  styles.languageButtonText,
+                  selectedLanguage === 'en' && styles.languageButtonTextActive,
+                ]}>
+                🇬🇧 English
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.languageButton,
+                selectedLanguage === 'hi' && styles.languageButtonActive,
+              ]}
+              onPress={() => setSelectedLanguage('hi')}
+              activeOpacity={0.7}>
+              <Text
+                style={[
+                  styles.languageButtonText,
+                  selectedLanguage === 'hi' && styles.languageButtonTextActive,
+                ]}>
+                🇮🇳 हिंदी
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Large Record Visit Button */}
         <TouchableOpacity
           style={styles.recordButton}
@@ -350,6 +390,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
+  },
+  languageSelector: {
+    marginBottom: 40,
+    alignItems: 'center',
+  },
+  languageSelectorLabel: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  languageButtons: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  languageButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 25,
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#ddd',
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  languageButtonActive: {
+    backgroundColor: '#3498db',
+    borderColor: '#3498db',
+  },
+  languageButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#7f8c8d',
+  },
+  languageButtonTextActive: {
+    color: '#fff',
   },
   recordButton: {
     width: 240,

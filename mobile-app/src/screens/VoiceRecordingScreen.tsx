@@ -10,21 +10,22 @@ import {
   Alert,
   BackHandler,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {VoiceRecordingScreenNavigationProp} from '../navigation/types';
+import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
+import {VoiceRecordingScreenNavigationProp, RootStackParamList} from '../navigation/types';
 import {voiceInputService} from '../services/voiceInput';
 import {entityExtractor} from '../services/entityExtractor';
 import {Language} from '../types';
+
+type VoiceRecordingScreenRouteProp = RouteProp<RootStackParamList, 'VoiceRecording'>;
 
 /**
  * Voice Recording Screen Component
  * 
  * Screen for capturing speech input from ASHA workers.
  * Features:
+ * - Receives language selection from Home screen
+ * - Manual start/stop recording controls
  * - Animated microphone icon (pulsing during recording)
- * - "Recording..." text indicator
- * - Stop button to end recording
- * - Cancel button to abort recording
  * - Display transcribed text after recording stops
  * - Integrate VoiceInputModule for speech-to-text
  * - Hardware back button handling (Android)
@@ -34,9 +35,12 @@ import {Language} from '../types';
 
 const VoiceRecordingScreen: React.FC = () => {
   const navigation = useNavigation<VoiceRecordingScreenNavigationProp>();
+  const route = useRoute<VoiceRecordingScreenRouteProp>();
+  
   const [isRecording, setIsRecording] = useState(false);
   const [transcribedText, setTranscribedText] = useState('');
-  const [selectedLanguage, setSelectedLanguage] = useState<Language>('hi');
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>(route.params?.language || 'en');
+  const [isReady, setIsReady] = useState(false);
   
   // Animation values for pulsing microphone
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -51,71 +55,20 @@ const VoiceRecordingScreen: React.FC = () => {
     }
   }, [isRecording]);
 
-  // Auto-start recording when screen loads
+  // Initialize screen
   useEffect(() => {
-    checkVoiceAvailabilityAndStart();
+    console.log('[VoiceRecordingScreen] Screen mounted with language:', selectedLanguage);
+    setIsReady(true);
     
     // Cleanup on unmount
     return () => {
+      console.log('[VoiceRecordingScreen] Screen unmounting, cleaning up');
       if (voiceInputService.isRecording()) {
         voiceInputService.cancelRecording();
       }
+      voiceInputService.destroy();
     };
   }, []);
-
-  /**
-   * Check if voice recognition is available and start recording
-   */
-  const checkVoiceAvailabilityAndStart = async () => {
-    try {
-      const available = await voiceInputService.isAvailable();
-      if (!available) {
-        Alert.alert(
-          'Voice Recognition Not Available / वॉइस पहचान उपलब्ध नहीं',
-          'Voice recognition is not available on this device. You can still test other features.\n\nइस डिवाइस पर वॉइस पहचान उपलब्ध नहीं है। आप अन्य सुविधाओं का परीक्षण कर सकते हैं।',
-          [
-            {
-              text: 'Use Text Input / टेक्स्ट इनपुट उपयोग करें',
-              onPress: () => {
-                // For testing: simulate voice input with text
-                setTranscribedText('Patient name is Priya, BP is 120/80, child has fever');
-                setIsRecording(false);
-              },
-            },
-            {
-              text: 'Go Back / वापस जाएं',
-              style: 'cancel',
-              onPress: () => navigation.goBack(),
-            },
-          ]
-        );
-        return;
-      }
-      
-      await handleStartRecording();
-    } catch (error) {
-      console.error('Error checking voice availability:', error);
-      // Show option to use text input for testing
-      Alert.alert(
-        'Voice Recognition Error / वॉइस पहचान त्रुटि',
-        'Could not initialize voice recognition. Use text input for testing?\n\nवॉइस पहचान प्रारंभ नहीं हो सका। परीक्षण के लिए टेक्स्ट इनपुट उपयोग करें?',
-        [
-          {
-            text: 'Use Text Input / टेक्स्ट इनपुट',
-            onPress: () => {
-              setTranscribedText('Patient name is Priya, BP is 120/80, child has fever');
-              setIsRecording(false);
-            },
-          },
-          {
-            text: 'Cancel / रद्द करें',
-            style: 'cancel',
-            onPress: () => navigation.goBack(),
-          },
-        ]
-      );
-    }
-  };
 
   // Handle hardware back button on Android
   useEffect(() => {
@@ -188,15 +141,18 @@ const VoiceRecordingScreen: React.FC = () => {
    * Requirements: 2.1
    */
   const handleStartRecording = async () => {
+    console.log('[VoiceRecordingScreen] Start recording button pressed');
+    
     try {
+      setTranscribedText('');
       await voiceInputService.startRecording(selectedLanguage);
       setIsRecording(true);
-      setTranscribedText('');
-    } catch (error) {
-      console.error('Error starting recording:', error);
+      console.log('[VoiceRecordingScreen] Recording started successfully');
+    } catch (error: any) {
+      console.error('[VoiceRecordingScreen] Error starting recording:', error);
       Alert.alert(
         'Recording Error / रिकॉर्डिंग त्रुटि',
-        'Failed to start recording. Please check microphone permissions.\nरिकॉर्डिंग शुरू करने में विफल। कृपया माइक्रोफ़ोन अनुमतियाँ जांचें।',
+        error?.message || 'Failed to start recording. Please check microphone permissions.\nरिकॉर्डिंग शुरू करने में विफल। कृपया माइक्रोफ़ोन अनुमतियाँ जांचें।',
         [
           {
             text: 'OK',
@@ -212,15 +168,21 @@ const VoiceRecordingScreen: React.FC = () => {
    * Requirements: 2.2, 2.3
    */
   const handleStopRecording = async () => {
+    console.log('[VoiceRecordingScreen] Stop recording button pressed');
+    
     try {
       const text = await voiceInputService.stopRecording();
       setIsRecording(false);
       setTranscribedText(text);
+      
+      console.log('[VoiceRecordingScreen] Transcribed text:', text || '(empty)');
 
       // If we have transcribed text, extract entities and navigate to confirmation
       if (text && text.trim().length > 0) {
         // Extract entities from transcribed text
         const extractedData = entityExtractor.extractEntities(text, selectedLanguage);
+        
+        console.log('[VoiceRecordingScreen] Extracted data:', extractedData);
         
         // Navigate to confirmation screen with extracted data
         navigation.navigate('VoiceConfirmation', {
@@ -232,10 +194,10 @@ const VoiceRecordingScreen: React.FC = () => {
           },
         });
       } else {
-        // No speech detected
+        // No speech detected or recognized
         Alert.alert(
           'No Speech Detected / कोई आवाज़ नहीं मिली',
-          'Please try again and speak clearly.\nकृपया पुनः प्रयास करें और स्पष्ट रूप से बोलें।',
+          `No speech was recognized. Please try again and speak clearly in ${selectedLanguage === 'hi' ? 'Hindi' : 'English'}.\n\nकोई आवाज़ नहीं पहचानी गई। कृपया पुनः प्रयास करें और स्पष्ट रूप से ${selectedLanguage === 'hi' ? 'हिंदी' : 'अंग्रेजी'} में बोलें।\n\nTips:\n• Speak clearly and not too fast\n• Reduce background noise\n• Hold phone closer to mouth`,
           [
             {
               text: 'Try Again / पुनः प्रयास करें',
@@ -250,7 +212,7 @@ const VoiceRecordingScreen: React.FC = () => {
         );
       }
     } catch (error) {
-      console.error('Error stopping recording:', error);
+      console.error('[VoiceRecordingScreen] Error stopping recording:', error);
       setIsRecording(false);
       Alert.alert(
         'Recording Error / रिकॉर्डिंग त्रुटि',
@@ -295,21 +257,16 @@ const VoiceRecordingScreen: React.FC = () => {
     );
   };
 
-  /**
-   * Toggle language between Hindi and English
-   */
-  const handleToggleLanguage = () => {
-    if (isRecording) {
-      Alert.alert(
-        'Cannot Change Language / भाषा नहीं बदल सकते',
-        'Please stop recording first.\nकृपया पहले रिकॉर्डिंग बंद करें।'
-      );
-      return;
-    }
-    
-    const newLanguage: Language = selectedLanguage === 'hi' ? 'en' : 'hi';
-    setSelectedLanguage(newLanguage);
-  };
+  if (!isReady) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#27ae60" />
+        <View style={styles.content}>
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -321,15 +278,12 @@ const VoiceRecordingScreen: React.FC = () => {
           {selectedLanguage === 'hi' ? 'विज़िट रिकॉर्ड करें' : 'Record Visit'}
         </Text>
         
-        {/* Language Toggle */}
-        <TouchableOpacity
-          style={styles.languageButton}
-          onPress={handleToggleLanguage}
-          activeOpacity={0.7}>
-          <Text style={styles.languageButtonText}>
+        {/* Language Display */}
+        <View style={styles.languageDisplay}>
+          <Text style={styles.languageDisplayText}>
             {selectedLanguage === 'hi' ? '🇮🇳 हिंदी' : '🇬🇧 English'}
           </Text>
-        </TouchableOpacity>
+        </View>
       </View>
 
       {/* Main Content */}
@@ -361,10 +315,10 @@ const VoiceRecordingScreen: React.FC = () => {
           {isRecording
             ? selectedLanguage === 'hi'
               ? 'बोलें... हम सुन रहे हैं'
-              : 'Speak... We are listening'
+              : 'Speak now... We are listening'
             : selectedLanguage === 'hi'
-            ? 'रिकॉर्डिंग रुकी हुई है'
-            : 'Recording paused'}
+            ? 'रिकॉर्डिंग शुरू करने के लिए नीचे बटन दबाएं'
+            : 'Press the button below to start recording'}
         </Text>
 
         {/* Transcribed Text Display */}
@@ -380,7 +334,31 @@ const VoiceRecordingScreen: React.FC = () => {
 
       {/* Control Buttons */}
       <View style={styles.controlsContainer}>
-        {isRecording ? (
+        {!isRecording ? (
+          <>
+            {/* Start Recording Button */}
+            <TouchableOpacity
+              style={[styles.controlButton, styles.startButton]}
+              onPress={handleStartRecording}
+              activeOpacity={0.8}>
+              <Text style={styles.controlButtonIcon}>🔴</Text>
+              <Text style={styles.controlButtonText}>
+                {selectedLanguage === 'hi' ? 'रिकॉर्डिंग शुरू करें' : 'Start Recording'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Back Button */}
+            <TouchableOpacity
+              style={[styles.controlButton, styles.backButton]}
+              onPress={() => navigation.goBack()}
+              activeOpacity={0.8}>
+              <Text style={styles.controlButtonIcon}>🔙</Text>
+              <Text style={styles.controlButtonText}>
+                {selectedLanguage === 'hi' ? 'वापस' : 'Back'}
+              </Text>
+            </TouchableOpacity>
+          </>
+        ) : (
           <>
             {/* Stop Button */}
             <TouchableOpacity
@@ -401,30 +379,6 @@ const VoiceRecordingScreen: React.FC = () => {
               <Text style={styles.controlButtonIcon}>❌</Text>
               <Text style={styles.controlButtonText}>
                 {selectedLanguage === 'hi' ? 'रद्द करें' : 'Cancel'}
-              </Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <>
-            {/* Re-record Button */}
-            <TouchableOpacity
-              style={[styles.controlButton, styles.recordButton]}
-              onPress={handleStartRecording}
-              activeOpacity={0.8}>
-              <Text style={styles.controlButtonIcon}>🔴</Text>
-              <Text style={styles.controlButtonText}>
-                {selectedLanguage === 'hi' ? 'फिर से रिकॉर्ड करें' : 'Record Again'}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Back Button */}
-            <TouchableOpacity
-              style={[styles.controlButton, styles.cancelButton]}
-              onPress={() => navigation.goBack()}
-              activeOpacity={0.8}>
-              <Text style={styles.controlButtonIcon}>🔙</Text>
-              <Text style={styles.controlButtonText}>
-                {selectedLanguage === 'hi' ? 'वापस' : 'Back'}
               </Text>
             </TouchableOpacity>
           </>
@@ -451,13 +405,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
-  languageButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  languageDisplay: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
   },
-  languageButtonText: {
+  languageDisplayText: {
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
@@ -467,6 +421,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#fff',
   },
   microphoneContainer: {
     width: 200,
@@ -503,6 +461,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10,
     opacity: 0.9,
+    paddingHorizontal: 20,
   },
   transcriptionContainer: {
     marginTop: 30,
@@ -541,14 +500,17 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
+  startButton: {
+    backgroundColor: '#e74c3c',
+  },
   stopButton: {
     backgroundColor: '#e74c3c',
   },
   cancelButton: {
     backgroundColor: '#95a5a6',
   },
-  recordButton: {
-    backgroundColor: '#e74c3c',
+  backButton: {
+    backgroundColor: '#95a5a6',
   },
   controlButtonIcon: {
     fontSize: 32,
@@ -558,6 +520,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 
