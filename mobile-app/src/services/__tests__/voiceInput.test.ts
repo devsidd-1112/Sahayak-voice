@@ -4,9 +4,10 @@
  * Tests the voice recording and speech-to-text functionality.
  */
 
-import { VoiceInputService } from '../voiceInput';
+import { voiceInputService } from '../voiceInput';
 import Voice from '@react-native-voice/voice';
 import { PermissionsAndroid, Platform } from 'react-native';
+
 
 // Mock @react-native-voice/voice
 jest.mock('@react-native-voice/voice', () => ({

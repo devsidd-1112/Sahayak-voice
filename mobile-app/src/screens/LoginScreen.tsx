@@ -170,6 +170,16 @@ const LoginScreen: React.FC = () => {
               </Text>
             )}
           </TouchableOpacity>
+
+          {/* Signup Link */}
+          <TouchableOpacity
+            style={styles.signupLink}
+            onPress={() => navigation.navigate('Signup')}
+            disabled={isLoading}>
+            <Text style={styles.signupLinkText}>
+              Don't have an account? Sign Up / खाता नहीं है? साइन अप करें
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Helper Text */}
@@ -279,6 +289,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  signupLink: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  signupLinkText: {
+    color: '#3498db',
+    fontSize: 14,
+    textAlign: 'center',
   },
   footer: {
     marginTop: 30,

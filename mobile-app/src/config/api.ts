@@ -8,7 +8,7 @@
 // For Android emulator: use 10.0.2.2 instead of localhost
 // For real device: use your computer's IP address
 export const API_BASE_URL = __DEV__
-  ? 'http://10.0.2.2:8080/api'
+  ? 'http://172.20.10.2:8080/api'
   : 'https://your-production-api.com/api';
 
 // API endpoints
@@ -16,6 +16,9 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
+    SIGNUP: '/auth/signup',
+    VERIFY_OTP: '/auth/verify-otp',
+    RESEND_OTP: '/auth/resend-otp',
   },
   VISITS: {
     SYNC: '/visits/sync',

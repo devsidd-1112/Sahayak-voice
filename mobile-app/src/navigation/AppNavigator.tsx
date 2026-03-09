@@ -3,6 +3,8 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LoginScreen from '../screens/LoginScreen';
+import SignupScreen from '../screens/SignupScreen';
+import OTPVerificationScreen from '../screens/OTPVerificationScreen';
 import HomeScreen from '../screens/HomeScreen';
 import VoiceRecordingScreen from '../screens/VoiceRecordingScreen';
 import VoiceConfirmationScreen from '../screens/VoiceConfirmationScreen';
@@ -78,6 +80,20 @@ const AppNavigator: React.FC = () => {
           component={LoginScreen}
           options={{
             headerShown: false, // Hide header on login screen
+          }}
+        />
+        <Stack.Screen
+          name="Signup"
+          component={SignupScreen}
+          options={{
+            headerShown: false, // Hide header on signup screen
+          }}
+        />
+        <Stack.Screen
+          name="OTPVerification"
+          component={OTPVerificationScreen}
+          options={{
+            headerShown: false, // Hide header on OTP screen
           }}
         />
         <Stack.Screen

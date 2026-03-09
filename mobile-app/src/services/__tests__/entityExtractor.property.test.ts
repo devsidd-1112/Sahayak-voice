@@ -8,7 +8,7 @@
  */
 
 import * as fc from 'fast-check';
-import {SimpleEntityExtractor} from '../entityExtractor';
+import {entityExtractor} from '../entityExtractor';
 
 describe('EntityExtractor - Property-Based Tests', () => {
   const extractor = new SimpleEntityExtractor();

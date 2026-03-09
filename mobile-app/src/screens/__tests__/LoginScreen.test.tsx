@@ -154,7 +154,7 @@ describe('LoginScreen', () => {
   });
 
   it('disables inputs and shows loading indicator during login', async () => {
-    let resolveLogin: () => void;
+    let resolveLogin: (value: any) => void;
     const loginPromise = new Promise<any>(resolve => {
       resolveLogin = resolve;
     });

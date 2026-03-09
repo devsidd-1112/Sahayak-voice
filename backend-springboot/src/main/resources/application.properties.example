@@ -1,0 +1,27 @@
+# Server Configuration
+server.port=8080
+server.address=0.0.0.0
+spring.application.name=sahayak-voice-backend
+
+# MongoDB Configuration
+# IMPORTANT: Copy this file to application.properties and add your actual credentials
+spring.data.mongodb.uri=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>?retryWrites=true&w=majority&tls=true
+spring.data.mongodb.database=sahayak_voice_db
+spring.data.mongodb.auto-index-creation=true
+
+# JWT Configuration
+# IMPORTANT: Generate a secure random key (min 256 bits)
+jwt.secret=CHANGE-THIS-TO-A-SECURE-RANDOM-KEY-MIN-256-BITS
+jwt.expiration=604800000
+
+# Logging
+logging.level.root=INFO
+logging.level.com.sahayak=DEBUG
+logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} - %msg%n
+
+# CORS Configuration - Allow all origins for mobile app development
+cors.allowed-origins=*
+
+# Security
+spring.security.user.name=admin
+spring.security.user.password=CHANGE-THIS-PASSWORD

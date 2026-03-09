@@ -2,19 +2,19 @@
 
 buildscript {
     ext {
-        buildToolsVersion = "35.0.0"
+        buildToolsVersion = "33.0.0"
         minSdkVersion = 23
-        compileSdkVersion = 35
-        targetSdkVersion = 35
+        compileSdkVersion = 33
+        targetSdkVersion = 33
         ndkVersion = "25.1.8937393"
-        kotlinVersion = "1.9.0"
+        kotlinVersion = "1.8.22"
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:8.6.1")
+        classpath("com.android.tools.build:gradle:7.4.2")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
     }
@@ -31,6 +31,15 @@ allprojects {
         maven {
             // Android JSC is installed from npm
             url("$rootDir/../node_modules/jsc-android/dist")
+        }
+    }
+    
+    configurations.all {
+        resolutionStrategy {
+            force 'androidx.core:core:1.9.0'
+            force 'androidx.core:core-ktx:1.9.0'
+            force 'androidx.appcompat:appcompat:1.5.1'
+            force 'androidx.appcompat:appcompat-resources:1.5.1'
         }
     }
 }

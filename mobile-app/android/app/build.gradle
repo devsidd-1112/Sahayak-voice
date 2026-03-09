@@ -61,7 +61,21 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
-    implementation("com.facebook.react:flipper-integration")
+    implementation("com.facebook.react:react-native")
+
+    // Force compatible androidx versions for Gradle 7.4.2 and SDK 33
+    implementation("androidx.core:core:1.9.0") {
+        force = true
+    }
+    implementation("androidx.core:core-ktx:1.9.0") {
+        force = true
+    }
+    implementation("androidx.appcompat:appcompat:1.5.1") {
+        force = true
+    }
+    implementation("androidx.appcompat:appcompat-resources:1.5.1") {
+        force = true
+    }
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

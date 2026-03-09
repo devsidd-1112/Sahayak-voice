@@ -9,8 +9,15 @@ import {RouteProp} from '@react-navigation/native';
  */
 export type RootStackParamList = {
   Login: undefined;
+  Signup: undefined;
+  OTPVerification: {
+    phoneNumber: string;
+    name: string;
+  };
   Home: undefined;
-  VoiceRecording: undefined;
+  VoiceRecording: {
+    language: 'hi' | 'en';
+  };
   VoiceConfirmation: {
     extractedData: {
       patientName: string | null;
@@ -31,6 +38,16 @@ export type RootStackParamList = {
 export type LoginScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
   'Login'
+>;
+
+export type SignupScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'Signup'
+>;
+
+export type OTPVerificationScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'OTPVerification'
 >;
 
 export type HomeScreenNavigationProp = StackNavigationProp<
@@ -63,6 +80,11 @@ export type SyncStatusScreenNavigationProp = StackNavigationProp<
  * 
  * Type definitions for route props used in screen components.
  */
+export type OTPVerificationScreenRouteProp = RouteProp<
+  RootStackParamList,
+  'OTPVerification'
+>;
+
 export type VoiceConfirmationScreenRouteProp = RouteProp<
   RootStackParamList,
   'VoiceConfirmation'
